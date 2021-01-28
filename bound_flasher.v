@@ -1,3 +1,17 @@
+module bound_flasher (clk, rst_n, flick, lamp);
+parameter NUM_LAMP = 16;
+input clk, rst_n, flick;			
+output [NUM_LAMP-1:0] lamp;
+wire clk, rst_n, flick;
+wire [NUM_LAMP-1:0] lamp;
+wire up, down;
+defparam i_lamp_behave_control.NUM_LAMP = NUM_LAMP;
+defparam i_lamp_signal_decode.NUM_LAMP = NUM_LAMP;
+lamp_behave_control i_lamp_behave_control (clk, rst_n, flick, lamp, up, down);
+lamp_signal_decode i_lamp_signal_decode(clk, rst_n, up, down, lamp);
+
+endmodule
+
 module lamp_behave_control (clk, rst_n, flick, lamp, up, down);
 parameter NUM_LAMP = 16;
 input clk, rst_n, flick;
@@ -7,12 +21,12 @@ wire clk, rst_n, flick;
 wire [NUM_LAMP-1:0] lamp;
 reg up, down;
 reg[2:0] state, state_next;
-parameter UP_0_15 =		3'd0;
-parameter DOWN_15_5 =	3'd1;
-parameter UP_5_10 =		3'd2;
-parameter DOWN_10_0 =	3'd3;
-parameter UP_0_5 =		3'd4;
-parameter DOWN_5_0 =	3'd5;
+parameter UP_0_15 		=3'd0;
+parameter DOWN_15_5 	=3'd1;
+parameter UP_5_10 		=3'd2;
+parameter DOWN_10_0 	=3'd3;
+parameter UP_0_5 		=3'd4;
+parameter DOWN_5_0 	=3'd5;
 always @ (posedge clk or negedge rst_n) begin
 	if (~rst_n) begin
 		state <= 3'b0;
@@ -24,7 +38,7 @@ end
 
 always @ (flick or state) begin
 	case (state)
-	UP_0_15: begin
+	UP_0_15 : begin
 		if (lamp==16'b0 & flick) begin
 			up = 1'b1;
 			down = 1'b0;
@@ -127,7 +141,7 @@ end
 
 endmodule		
 				
-module shift_register (clk, rst_n, up, down, lamp);
+module lamp_signal_decode (clk, rst_n, up, down, lamp);
 parameter NUM_LAMP = 16;
 input clk, rst_n, up, down;				
 output [NUM_LAMP-1:0] lamp;
@@ -136,14 +150,14 @@ reg [NUM_LAMP-1:0] lamp, lamp_next;
 
 always @(posedge clk or negedge rst_n) begin
 	if (~rst_n) begin
-		lamp <= NUM_LAMP'b0;
+		lamp <= 0;
 	end
 	else begin
 		lamp <= lamp_next;
 	end
 end
 
-always @(lamp) begin
+always @(lamp or up or down) begin
 	case ({up,down})
 	2'b00: begin
 		lamp_next = lamp;
@@ -155,18 +169,9 @@ always @(lamp) begin
 		lamp_next = {lamp[NUM_LAMP-2:0],1'b1};
 	end
 	default: begin
-		lamp_next = NUM_LAMP'b0;
+		lamp_next = 0;
 	end
 	endcase
 end
 
 endmodule
-				
-				
-				
-				
-				
-				
-				
-				
-				
